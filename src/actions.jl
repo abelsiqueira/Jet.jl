@@ -11,10 +11,18 @@ Return all entries for which its package field matches `pkg_name`.
 """
 function jet_pkg(pkg_name, should_print=true)
   output = []
+  i = 0
   for entry in data
     if lowercase(entry["package"]) == lowercase(pkg_name)
       push!(output, entry)
+    elseif StringDistances.compare(lowercase(entry["package"]), lowercase(pkg_name), TokenMax(Levenshtein())) > 0.7
+      push!(output, entry)
+      i = i+1
     end
+  end
+  if i > 0
+    println("Closest Result to $(pkg_name) is:")
+    i = 0
   end
   if should_print
     build_formatted_output(output)
@@ -31,11 +39,17 @@ Return all entries that match the `kw` in either the description or the command 
 function jet_snippet(kw, should_print=true)
   output = []
   kw = lowercase(kw)
+  i = 0
   for entry in data
+    for tag in entry["tags"]
+      if kw == lowercase(tag) || StringDistances.compare(kw, lowercase(tag), TokenMax(Levenshtein())) > 0.6
+        i = i+1
+      end
+    end
     if occursin(kw, lowercase(entry["command"])) ||
-       occursin(kw, lowercase(entry["description"])) ||
-       kw in entry["tags"]
+       occursin(kw, lowercase(entry["description"])) || i > 0
       push!(output, entry)
+      i = 0
     end
   end
   if should_print
@@ -53,13 +67,20 @@ Return all entries part of `pkg_name` that match the `kw` in either the descript
 function jet_snippet_in(kw, pkg_name, should_print=true)
   output = []
   kw = lowercase(kw)
+  i = 0
   pkg_name = lowercase(pkg_name)
   for entry in data
-    if lowercase(entry["package"]) == pkg_name &&
+    for tag in entry["tags"]
+      if kw == lowercase(tag) || StringDistances.compare(kw, lowercase(tag), TokenMax(Levenshtein())) > 0.6
+        i = i+1
+      end
+    end
+    if (lowercase(entry["package"]) == pkg_name || StringDistances.compare(entry["package"], lowercase(pkg_name), TokenMax(Levenshtein())) > 0.7) &&
        (occursin(kw, lowercase(entry["command"])) ||
        occursin(kw, lowercase(entry["description"])) ||
-       kw in entry["tags"])
+       i > 0)
       push!(output, entry)
+      i = 0
     end
   end
   if should_print

@@ -14,6 +14,12 @@ function tests()
     @test jet("?", true) === jet("?") === jet_pkg("Jet") === jet_snippet("?") === jet_snippet_in("?", "Jet") === nothing
   end
 
+  @testset "Fuzzy Search" begin
+    @test jet_pkg("datafarmes", false) == jet_pkg("DataFrames", false)
+    @test jet("pkg:datafarm4es", false) == jet("pkg:DataFrames", false)
+    @test jet("bopxlot", false) == jet("boxplot", false)
+  end
+
   @testset "Data is sorted" begin
     p(x) = x["package"]
     o(x) = Dict("header" => 1, "snippet" => 2)[x["kind"]]
